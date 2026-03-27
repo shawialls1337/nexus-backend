@@ -14,9 +14,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 10000
+})
   .then(() => console.log("MongoDB bağlandı."))
-  .catch((err) => console.error("MongoDB bağlantı hatası:", err.message));
+  .catch((err) => console.error("MongoDB bağlantı hatası:", err));
 
 function isAdmin(req) {
   return req.body && req.body.adminPassword === process.env.ADMIN_PASSWORD;
@@ -28,6 +30,25 @@ app.get("/", (req, res) => {
 
 app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
+
+app.get("/api/test-db", async (req, res) => {
+  try {
+    const state = mongoose.connection.readyState;
+
+    return res.json({
+      success: true,
+      mongoState: state,
+      mongoUriExists: !!process.env.MONGO_URI,
+      adminPasswordExists: !!process.env.ADMIN_PASSWORD
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "DB test hatası",
+      error: error.message
+    });
+  }
 });
 
 app.post("/api/login", async (req, res) => {
@@ -153,7 +174,8 @@ app.post("/api/admin/create-key", async (req, res) => {
     console.error("Create key hatası:", error);
     return res.status(500).json({
       success: false,
-      message: "Sunucu hatası."
+      message: "Sunucu hatası.",
+      error: error.message
     });
   }
 });
@@ -193,7 +215,8 @@ app.post("/api/admin/delete-key", async (req, res) => {
     console.error("Delete key hatası:", error);
     return res.status(500).json({
       success: false,
-      message: "Sunucu hatası."
+      message: "Sunucu hatası.",
+      error: error.message
     });
   }
 });
@@ -236,7 +259,8 @@ app.post("/api/admin/ban-key", async (req, res) => {
     console.error("Ban key hatası:", error);
     return res.status(500).json({
       success: false,
-      message: "Sunucu hatası."
+      message: "Sunucu hatası.",
+      error: error.message
     });
   }
 });
@@ -296,7 +320,8 @@ app.post("/api/admin/extend-key", async (req, res) => {
     console.error("Extend key hatası:", error);
     return res.status(500).json({
       success: false,
-      message: "Sunucu hatası."
+      message: "Sunucu hatası.",
+      error: error.message
     });
   }
 });
@@ -339,7 +364,8 @@ app.post("/api/admin/reset-hwid", async (req, res) => {
     console.error("Reset HWID hatası:", error);
     return res.status(500).json({
       success: false,
-      message: "Sunucu hatası."
+      message: "Sunucu hatası.",
+      error: error.message
     });
   }
 });
@@ -365,7 +391,8 @@ app.get("/api/admin/list-keys", async (req, res) => {
     console.error("List keys hatası:", error);
     return res.status(500).json({
       success: false,
-      message: "Sunucu hatası."
+      message: "Sunucu hatası.",
+      error: error.message
     });
   }
 });
