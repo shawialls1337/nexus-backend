@@ -1,6 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Nexus Admin Panel</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0b1220;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #131d34;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    input, select {
+      background: #09152d;
+      color: white;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .result {
+      margin-top: 12px;
+      color: #9fc0ff;
+      white-space: pre-wrap;
+    }
+
+    .list-box {
+      margin-top: 12px;
+      background: #09152d;
+      padding: 15px;
+      border-radius: 12px;
+      max-height: 400px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
 <body>
-<h1>Admin Panel Çalışıyor</h1>
+  <h1>Nexus Admin Panel</h1>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Key Oluştur</h3>
+      <input id="adminPassword" placeholder="Admin şifresi">
+      <input id="createKey" placeholder="Key">
+      <input id="createUsername" placeholder="Kullanıcı adı">
+      <select id="createPlan">
+        <option value="standard">standard</option>
+        <option value="premium">premium</option>
+      </select>
+      <input id="createDays" type="number" placeholder="Kaç gün">
+      <button onclick="createKey()">Oluştur</button>
+      <div class="result" id="createResult"></div>
+    </div>
+
+    <div class="card">
+      <h3>Key Sil</h3>
+      <input id="deleteKeyValue" placeholder="Silinecek key">
+      <button onclick="deleteKey()">Sil</button>
+      <div class="result" id="deleteResult"></div>
+    </div>
+
+    <div class="card">
+      <h3>Key Süresi Uzat</h3>
+      <input id="extendKeyValue" placeholder="Key">
+      <input id="extendDays" type="number" placeholder="Eklenecek gün">
+      <button onclick="extendKey()">Süre Uzat</button>
+      <div class="result" id="extendResult"></div>
+    </div>
+
+    <div class="card">
+      <h3>HWID Sıfırla</h3>
+      <input id="resetKeyValue" placeholder="Key">
+      <button onclick="resetHWID()">HWID Sıfırla</button>
+      <div class="result" id="resetResult"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Keyleri Listele</h3>
+    <button onclick="listKeys()">Listele</button>
+    <div class="list-box" id="listResult"></div>
+  </div>
+
+  <script>
+    function getAdminPassword() {
+      return document.getElementById("adminPassword").value.trim();
+    }
+
+    async function createKey() {
+      const res = await fetch("/api/admin/create-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminPassword: getAdminPassword(),
+          key: document.getElementById("createKey").value,
+          username: document.getElementById("createUsername").value,
+          plan: document.getElementById("createPlan").value,
+          days: document.getElementById("createDays").value
+        })
+      });
+      document.getElementById("createResult").textContent = JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function deleteKey() {
+      const res = await fetch("/api/admin/delete-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminPassword: getAdminPassword(),
+          key: document.getElementById("deleteKeyValue").value
+        })
+      });
+      document.getElementById("deleteResult").textContent = JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function extendKey() {
+      const res = await fetch("/api/admin/extend-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminPassword: getAdminPassword(),
+          key: document.getElementById("extendKeyValue").value,
+          days: document.getElementById("extendDays").value
+        })
+      });
+      document.getElementById("extendResult").textContent = JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function resetHWID() {
+      const res = await fetch("/api/admin/reset-hwid", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminPassword: getAdminPassword(),
+          key: document.getElementById("resetKeyValue").value
+        })
+      });
+      document.getElementById("resetResult").textContent = JSON.stringify(await res.json(), null, 2);
+    }
+
+    async function listKeys() {
+      const password = getAdminPassword();
+      const res = await fetch(`/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
+      document.getElementById("listResult").textContent = JSON.stringify(await res.json(), null, 2);
+    }
+  </script>
 </body>
 </html>

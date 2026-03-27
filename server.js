@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.error("MongoDB bağlantı hatası:", err.message));
 
 function isAdmin(req) {
-  return req.body.adminPassword === process.env.ADMIN_PASSWORD;
+  return req.body && req.body.adminPassword === process.env.ADMIN_PASSWORD;
 }
 
 app.get("/", (req, res) => {
@@ -64,7 +64,7 @@ app.post("/api/login", async (req, res) => {
       });
     }
 
-    if (foundKey.expiresAt && new Date() > foundKey.expiresAt) {
+    if (foundKey.expiresAt && new Date() > new Date(foundKey.expiresAt)) {
       foundKey.status = "expired";
       await foundKey.save();
 
@@ -75,8 +75,8 @@ app.post("/api/login", async (req, res) => {
     }
 
     if (!foundKey.hwid) {
-      foundKey.hwid = hwid;
-    } else if (foundKey.hwid !== hwid) {
+      foundKey.hwid = hwid.trim();
+    } else if (foundKey.hwid !== hwid.trim()) {
       return res.json({
         success: false,
         message: "Bu key başka cihaza bağlı."
@@ -104,18 +104,29 @@ app.post("/api/login", async (req, res) => {
 app.post("/api/admin/create-key", async (req, res) => {
   try {
     if (!isAdmin(req)) {
-      return res.status(403).json({ success: false, message: "Yetkisiz işlem." });
+      return res.status(403).json({
+        success: false,
+        message: "Yetkisiz işlem."
+      });
     }
 
     const { key, username, plan, days } = req.body;
 
-    if (!key) {
-      return res.status(400).json({ success: false, message: "Key gerekli." });
+    if (!key || !key.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Key gerekli."
+      });
     }
 
-    const existing = await License.findOne({ key: key.trim() });
+    const cleanKey = key.trim();
+
+    const existing = await License.findOne({ key: cleanKey });
     if (existing) {
-      return res.json({ success: false, message: "Bu key zaten var." });
+      return res.json({
+        success: false,
+        message: "Bu key zaten var."
+      });
     }
 
     let expiresAt = null;
@@ -125,8 +136,8 @@ app.post("/api/admin/create-key", async (req, res) => {
     }
 
     const newKey = new License({
-      key: key.trim(),
-      username: username || "Kullanıcı",
+      key: cleanKey,
+      username: username?.trim() || "Kullanıcı",
       plan: plan || "standard",
       expiresAt
     });
@@ -140,51 +151,135 @@ app.post("/api/admin/create-key", async (req, res) => {
     });
   } catch (error) {
     console.error("Create key hatası:", error);
-    return res.status(500).json({ success: false, message: "Sunucu hatası." });
+    return res.status(500).json({
+      success: false,
+      message: "Sunucu hatası."
+    });
   }
 });
 
 app.post("/api/admin/delete-key", async (req, res) => {
   try {
     if (!isAdmin(req)) {
-      return res.status(403).json({ success: false, message: "Yetkisiz işlem." });
+      return res.status(403).json({
+        success: false,
+        message: "Yetkisiz işlem."
+      });
     }
 
     const { key } = req.body;
+
+    if (!key || !key.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Key gerekli."
+      });
+    }
+
     const deleted = await License.findOneAndDelete({ key: key.trim() });
 
     if (!deleted) {
-      return res.json({ success: false, message: "Key bulunamadı." });
+      return res.json({
+        success: false,
+        message: "Key bulunamadı."
+      });
     }
 
-    return res.json({ success: true, message: "Key silindi." });
+    return res.json({
+      success: true,
+      message: "Key silindi."
+    });
   } catch (error) {
     console.error("Delete key hatası:", error);
-    return res.status(500).json({ success: false, message: "Sunucu hatası." });
+    return res.status(500).json({
+      success: false,
+      message: "Sunucu hatası."
+    });
+  }
+});
+
+app.post("/api/admin/ban-key", async (req, res) => {
+  try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Yetkisiz işlem."
+      });
+    }
+
+    const { key } = req.body;
+
+    if (!key || !key.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Key gerekli."
+      });
+    }
+
+    const found = await License.findOne({ key: key.trim() });
+
+    if (!found) {
+      return res.json({
+        success: false,
+        message: "Key bulunamadı."
+      });
+    }
+
+    found.status = "banned";
+    await found.save();
+
+    return res.json({
+      success: true,
+      message: "Key banlandı."
+    });
+  } catch (error) {
+    console.error("Ban key hatası:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Sunucu hatası."
+    });
   }
 });
 
 app.post("/api/admin/extend-key", async (req, res) => {
   try {
     if (!isAdmin(req)) {
-      return res.status(403).json({ success: false, message: "Yetkisiz işlem." });
+      return res.status(403).json({
+        success: false,
+        message: "Yetkisiz işlem."
+      });
     }
 
     const { key, days } = req.body;
+
+    if (!key || !key.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Key gerekli."
+      });
+    }
+
     const found = await License.findOne({ key: key.trim() });
 
     if (!found) {
-      return res.json({ success: false, message: "Key bulunamadı." });
+      return res.json({
+        success: false,
+        message: "Key bulunamadı."
+      });
     }
 
     const addDays = Number(days || 0);
     if (addDays <= 0) {
-      return res.json({ success: false, message: "Geçerli gün gir." });
+      return res.json({
+        success: false,
+        message: "Geçerli gün gir."
+      });
     }
 
-    let baseDate = found.expiresAt && found.expiresAt > new Date()
-      ? new Date(found.expiresAt)
-      : new Date();
+    let baseDate =
+      found.expiresAt && new Date(found.expiresAt) > new Date()
+        ? new Date(found.expiresAt)
+        : new Date();
 
     baseDate.setDate(baseDate.getDate() + addDays);
 
@@ -199,30 +294,53 @@ app.post("/api/admin/extend-key", async (req, res) => {
     });
   } catch (error) {
     console.error("Extend key hatası:", error);
-    return res.status(500).json({ success: false, message: "Sunucu hatası." });
+    return res.status(500).json({
+      success: false,
+      message: "Sunucu hatası."
+    });
   }
 });
 
 app.post("/api/admin/reset-hwid", async (req, res) => {
   try {
     if (!isAdmin(req)) {
-      return res.status(403).json({ success: false, message: "Yetkisiz işlem." });
+      return res.status(403).json({
+        success: false,
+        message: "Yetkisiz işlem."
+      });
     }
 
     const { key } = req.body;
+
+    if (!key || !key.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Key gerekli."
+      });
+    }
+
     const found = await License.findOne({ key: key.trim() });
 
     if (!found) {
-      return res.json({ success: false, message: "Key bulunamadı." });
+      return res.json({
+        success: false,
+        message: "Key bulunamadı."
+      });
     }
 
     found.hwid = "";
     await found.save();
 
-    return res.json({ success: true, message: "HWID sıfırlandı." });
+    return res.json({
+      success: true,
+      message: "HWID sıfırlandı."
+    });
   } catch (error) {
     console.error("Reset HWID hatası:", error);
-    return res.status(500).json({ success: false, message: "Sunucu hatası." });
+    return res.status(500).json({
+      success: false,
+      message: "Sunucu hatası."
+    });
   }
 });
 
@@ -231,7 +349,10 @@ app.get("/api/admin/list-keys", async (req, res) => {
     const adminPassword = req.query.adminPassword;
 
     if (adminPassword !== process.env.ADMIN_PASSWORD) {
-      return res.status(403).json({ success: false, message: "Yetkisiz işlem." });
+      return res.status(403).json({
+        success: false,
+        message: "Yetkisiz işlem."
+      });
     }
 
     const keys = await License.find().sort({ createdAt: -1 });
@@ -242,7 +363,10 @@ app.get("/api/admin/list-keys", async (req, res) => {
     });
   } catch (error) {
     console.error("List keys hatası:", error);
-    return res.status(500).json({ success: false, message: "Sunucu hatası." });
+    return res.status(500).json({
+      success: false,
+      message: "Sunucu hatası."
+    });
   }
 });
 
