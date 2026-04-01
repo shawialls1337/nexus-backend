@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus Premium Admin Panel</title>
+  <title>Nexus Admin Panel</title>
   <style>
     :root{
       --bg:#060b16;
@@ -36,6 +36,7 @@
         linear-gradient(135deg, #040814 0%, #081120 35%, #050a14 100%);
       color:var(--text);
       min-height:100%;
+      overflow-x:hidden;
     }
 
     body{
@@ -52,6 +53,7 @@
       opacity:.22;
       pointer-events:none;
       z-index:0;
+      animation:floatOrb 9s ease-in-out infinite;
     }
 
     .orb1{
@@ -64,6 +66,12 @@
       bottom:-120px;
       right:-80px;
       background:#7c3aed;
+      animation-delay: -3s;
+    }
+
+    @keyframes floatOrb{
+      0%,100%{ transform:translateY(0px) translateX(0px) scale(1); }
+      50%{ transform:translateY(18px) translateX(8px) scale(1.04); }
     }
 
     .container{
@@ -71,6 +79,108 @@
       z-index:1;
       max-width:1450px;
       margin:0 auto;
+      animation:fadeUp .55s ease;
+    }
+
+    @keyframes fadeUp{
+      from{
+        opacity:0;
+        transform:translateY(18px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .login-screen{
+      min-height:calc(100vh - 64px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      z-index:2;
+    }
+
+    .login-card{
+      width:100%;
+      max-width:520px;
+      padding:30px;
+      border-radius:30px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(15,23,42,.92), rgba(9,14,27,.85));
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+      position:relative;
+      overflow:hidden;
+      animation:loginPop .45s ease;
+    }
+
+    .login-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(120deg, rgba(59,130,246,.08), transparent 40%, rgba(147,51,234,.08));
+      pointer-events:none;
+    }
+
+    @keyframes loginPop{
+      from{
+        opacity:0;
+        transform:translateY(20px) scale(.98);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+      }
+    }
+
+    .shake{
+      animation:shake .35s ease;
+    }
+
+    @keyframes shake{
+      0%,100%{ transform:translateX(0); }
+      20%{ transform:translateX(-8px); }
+      40%{ transform:translateX(8px); }
+      60%{ transform:translateX(-6px); }
+      80%{ transform:translateX(6px); }
+    }
+
+    .login-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      width:max-content;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(59,130,246,.12);
+      border:1px solid rgba(59,130,246,.24);
+      color:#bfdbfe;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      margin-bottom:14px;
+    }
+
+    .login-title{
+      margin:0;
+      font-size:36px;
+      line-height:1.05;
+      font-weight:800;
+      letter-spacing:-.03em;
+    }
+
+    .login-subtitle{
+      margin:12px 0 22px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.7;
     }
 
     .topbar{
@@ -133,59 +243,32 @@
       font-size:14px;
     }
 
-    .admin-box{
-      min-width:320px;
-      max-width:420px;
-      width:100%;
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
       position:relative;
       z-index:2;
     }
 
-    .admin-label{
-      display:block;
-      font-size:12px;
-      color:#cbd5e1;
-      margin-bottom:10px;
-      font-weight:600;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-    }
-
-    .admin-input-wrap{
-      position:relative;
-    }
-
-    .admin-input{
-      width:100%;
-      border:1px solid rgba(255,255,255,.08);
-      background:rgba(2,6,23,.85);
-      color:white;
-      padding:15px 48px 15px 16px;
-      border-radius:16px;
-      outline:none;
-      font-size:14px;
-      transition:.2s ease;
-      box-shadow:inset 0 0 0 1px transparent;
-    }
-
-    .admin-input:focus{
-      border-color:rgba(59,130,246,.5);
-      box-shadow:0 0 0 4px rgba(59,130,246,.14);
-    }
-
-    .toggle-pass{
-      position:absolute;
-      top:50%;
-      right:12px;
-      transform:translateY(-50%);
-      background:none;
+    .logout-btn{
+      width:auto;
+      margin:0;
+      padding:12px 16px;
       border:none;
-      color:#93c5fd;
+      border-radius:14px;
       cursor:pointer;
       font-size:13px;
       font-weight:700;
-      padding:4px;
-      width:auto;
+      color:white;
+      background:linear-gradient(135deg, #334155, #1e293b);
+      box-shadow:0 12px 30px rgba(51,65,85,.22);
+      transition:.2s ease;
+    }
+
+    .logout-btn:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.06);
     }
 
     .stats{
@@ -203,6 +286,18 @@
       box-shadow:var(--shadow);
       position:relative;
       overflow:hidden;
+      transition:transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+      animation:cardReveal .5s ease both;
+    }
+
+    .stat:nth-child(2){ animation-delay:.05s; }
+    .stat:nth-child(3){ animation-delay:.1s; }
+    .stat:nth-child(4){ animation-delay:.15s; }
+
+    .stat:hover{
+      transform:translateY(-4px);
+      border-color:rgba(59,130,246,.22);
+      box-shadow:0 24px 60px rgba(0,0,0,.45);
     }
 
     .stat::before{
@@ -249,6 +344,30 @@
       box-shadow:var(--shadow);
       backdrop-filter:blur(16px);
       overflow:hidden;
+      transition:transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+      animation:cardReveal .55s ease both;
+    }
+
+    .card:hover{
+      transform:translateY(-4px);
+      border-color:rgba(59,130,246,.2);
+      box-shadow:0 24px 60px rgba(0,0,0,.48);
+    }
+
+    .card:nth-child(2){ animation-delay:.05s; }
+    .card:nth-child(3){ animation-delay:.1s; }
+    .card:nth-child(4){ animation-delay:.15s; }
+    .wide{ animation-delay:.2s; }
+
+    @keyframes cardReveal{
+      from{
+        opacity:0;
+        transform:translateY(18px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
     }
 
     .card::before{
@@ -327,14 +446,31 @@
       font-weight:700;
       color:white;
       margin-top:10px;
-      transition:transform .12s ease, opacity .2s ease, box-shadow .2s ease;
+      transition:transform .12s ease, opacity .2s ease, box-shadow .2s ease, filter .2s ease;
       box-shadow:0 12px 30px rgba(37,99,235,.22);
       position:relative;
       overflow:hidden;
     }
 
+    .btn::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:-120%;
+      width:60%;
+      height:100%;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent);
+      transform:skewX(-20deg);
+      transition:left .55s ease;
+    }
+
+    .btn:hover::before{
+      left:130%;
+    }
+
     .btn:hover{
       transform:translateY(-1px);
+      filter:brightness(1.05);
     }
 
     .btn:active{
@@ -377,6 +513,7 @@
       min-height:56px;
       font-size:13px;
       line-height:1.6;
+      transition:.2s ease;
     }
 
     .result.empty{
@@ -387,12 +524,19 @@
       border-color:rgba(34,197,94,.25);
       color:#bbf7d0;
       background:rgba(20,83,45,.12);
+      animation:softPulse .4s ease;
     }
 
     .result.err{
       border-color:rgba(239,68,68,.22);
       color:#fecaca;
       background:rgba(127,29,29,.12);
+      animation:softPulse .4s ease;
+    }
+
+    @keyframes softPulse{
+      0%{ transform:scale(.992); opacity:.9; }
+      100%{ transform:scale(1); opacity:1; }
     }
 
     .wide{
@@ -481,10 +625,11 @@
       }
       .topbar{
         flex-direction:column;
-        align-items:stretch;
+        align-items:flex-start;
       }
-      .admin-box{
-        max-width:none;
+      .topbar-right{
+        width:100%;
+        justify-content:flex-end;
       }
     }
 
@@ -498,8 +643,16 @@
       .row-2{
         grid-template-columns:1fr;
       }
-      .title{
+      .title,
+      .login-title{
         font-size:26px;
+      }
+      .login-card{
+        padding:22px;
+      }
+      .toast{
+        min-width:auto;
+        max-width:calc(100vw - 32px);
       }
     }
   </style>
@@ -510,20 +663,36 @@
 
   <div class="toast-wrap" id="toastWrap"></div>
 
-  <div class="container">
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card" id="loginCard">
+      <div class="login-badge">◆ Nexus Security Access</div>
+      <h1 class="login-title">Nexus Admin Panel</h1>
+      <p class="login-subtitle">
+        Yönetim paneline erişmek için admin şifresini gir. Doğrulama sonrası kontrol ekranı açılacaktır.
+      </p>
+
+      <div class="input-group">
+        <label class="input-label">Admin Şifresi</label>
+        <div style="position:relative;">
+          <input id="loginPassword" class="field" type="password" placeholder="Admin şifresini gir..." />
+          <button type="button" class="toggle-pass" onclick="toggleLoginPassword()">Göster</button>
+        </div>
+      </div>
+
+      <button class="btn primary" onclick="loginToPanel()">Panele Giriş Yap</button>
+    </div>
+  </div>
+
+  <div class="container hidden" id="panelContainer">
     <div class="topbar">
       <div class="brand">
-        <div class="badge">◆ Premium Control Center</div>
-        <h1 class="title">Nexus Premium Admin Panel</h1>
+        <div class="badge">◆ Nexus Control Center</div>
+        <h1 class="title">Nexus Admin Panel</h1>
         <p class="subtitle">Key yönetimi, HWID işlemleri ve lisans kontrolü için modern yönetim arayüzü</p>
       </div>
 
-      <div class="admin-box">
-        <label class="admin-label">Admin Şifresi</label>
-        <div class="admin-input-wrap">
-          <input id="adminPassword" class="admin-input" type="password" placeholder="Admin şifresini gir..." />
-          <button class="toggle-pass" onclick="togglePassword()">Göster</button>
-        </div>
+      <div class="topbar-right">
+        <button class="logout-btn" onclick="logoutPanel()">Çıkış Yap</button>
       </div>
     </div>
 
@@ -540,8 +709,8 @@
       </div>
       <div class="stat">
         <h4>Arayüz</h4>
-        <div class="value">Premium</div>
-        <div class="mini">Modern yönetim teması</div>
+        <div class="value">Modern</div>
+        <div class="mini">Yönetim paneli teması</div>
       </div>
       <div class="stat">
         <h4>İşlem Modu</h4>
@@ -645,21 +814,8 @@
   </div>
 
   <script>
-    function getAdminPassword() {
-      return document.getElementById("adminPassword").value.trim();
-    }
-
-    function togglePassword() {
-      const input = document.getElementById("adminPassword");
-      const btn = document.querySelector(".toggle-pass");
-      if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "Gizle";
-      } else {
-        input.type = "password";
-        btn.textContent = "Göster";
-      }
-    }
+    const SESSION_KEY = "nexus_admin_session";
+    let ADMIN_PASSWORD = "";
 
     function showToast(message, type = "info") {
       const wrap = document.getElementById("toastWrap");
@@ -674,6 +830,76 @@
         toast.style.transition = ".2s ease";
         setTimeout(() => toast.remove(), 220);
       }, 2600);
+    }
+
+    function toggleLoginPassword() {
+      const input = document.getElementById("loginPassword");
+      const btn = document.querySelector("#loginScreen .toggle-pass");
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "Gizle";
+      } else {
+        input.type = "password";
+        btn.textContent = "Göster";
+      }
+    }
+
+    function getAdminPassword() {
+      return ADMIN_PASSWORD.trim();
+    }
+
+    function showPanel() {
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("panelContainer").classList.remove("hidden");
+    }
+
+    function showLogin() {
+      document.getElementById("panelContainer").classList.add("hidden");
+      document.getElementById("loginScreen").classList.remove("hidden");
+    }
+
+    async function loginToPanel() {
+      const passwordInput = document.getElementById("loginPassword");
+      const loginCard = document.getElementById("loginCard");
+      const password = passwordInput.value.trim();
+
+      if (!password) {
+        loginCard.classList.remove("shake");
+        void loginCard.offsetWidth;
+        loginCard.classList.add("shake");
+        showToast("Admin şifresi gerekli.", "error");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
+        const data = await res.json();
+
+        if (data && data.success === true) {
+          ADMIN_PASSWORD = password;
+          sessionStorage.setItem(SESSION_KEY, password);
+          showPanel();
+          showToast("Panele giriş başarılı.", "success");
+        } else {
+          loginCard.classList.remove("shake");
+          void loginCard.offsetWidth;
+          loginCard.classList.add("shake");
+          showToast((data && data.message) ? data.message : "Şifre doğrulanamadı.", "error");
+        }
+      } catch (err) {
+        loginCard.classList.remove("shake");
+        void loginCard.offsetWidth;
+        loginCard.classList.add("shake");
+        showToast("Sunucuya bağlanırken hata oluştu.", "error");
+      }
+    }
+
+    function logoutPanel() {
+      ADMIN_PASSWORD = "";
+      sessionStorage.removeItem(SESSION_KEY);
+      document.getElementById("loginPassword").value = "";
+      showLogin();
+      showToast("Oturum kapatıldı.", "info");
     }
 
     function setResult(id, data) {
@@ -693,7 +919,8 @@
     function requirePassword() {
       const password = getAdminPassword();
       if (!password) {
-        showToast("Önce admin şifresi girmen gerekiyor.", "error");
+        showToast("Önce giriş yapman gerekiyor.", "error");
+        showLogin();
         return false;
       }
       return true;
@@ -807,6 +1034,22 @@
         showToast("Kopyalama başarısız.", "error");
       }
     }
+
+    document.getElementById("loginPassword").addEventListener("keydown", function(e){
+      if (e.key === "Enter") {
+        loginToPanel();
+      }
+    });
+
+    window.addEventListener("load", () => {
+      const savedPassword = sessionStorage.getItem(SESSION_KEY);
+      if (savedPassword) {
+        ADMIN_PASSWORD = savedPassword;
+        showPanel();
+      } else {
+        showLogin();
+      }
+    });
   </script>
 </body>
 </html>
