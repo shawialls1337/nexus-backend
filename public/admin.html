@@ -1,123 +1,647 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Nexus Admin Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Premium Admin Panel</title>
   <style>
-    body {
-      margin: 0;
-      background: #0b1220;
-      color: white;
-      font-family: Arial, sans-serif;
-      padding: 30px;
+    :root{
+      --bg:#060b16;
+      --bg2:#0b1220;
+      --card:rgba(15,23,42,.78);
+      --card-2:rgba(10,16,30,.9);
+      --stroke:rgba(255,255,255,.08);
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --primary:#3b82f6;
+      --primary-2:#2563eb;
+      --success:#22c55e;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --shadow:0 20px 60px rgba(0,0,0,.45);
+      --radius:22px;
     }
 
-    h1 {
-      margin-bottom: 20px;
+    *{
+      box-sizing:border-box;
     }
 
-    .card {
-      background: #131d34;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
+    html,body{
+      margin:0;
+      padding:0;
+      font-family:Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,.16), transparent 25%),
+        radial-gradient(circle at top right, rgba(147,51,234,.12), transparent 22%),
+        linear-gradient(135deg, #040814 0%, #081120 35%, #050a14 100%);
+      color:var(--text);
+      min-height:100%;
     }
 
-    input, select, button {
-      width: 100%;
-      margin-top: 10px;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-      font-size: 14px;
-      box-sizing: border-box;
+    body{
+      padding:32px;
     }
 
-    input, select {
-      background: #09152d;
-      color: white;
+    .bg-orb{
+      position:fixed;
+      inset:auto;
+      width:380px;
+      height:380px;
+      border-radius:50%;
+      filter:blur(100px);
+      opacity:.22;
+      pointer-events:none;
+      z-index:0;
     }
 
-    button {
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
+    .orb1{
+      top:-80px;
+      left:-80px;
+      background:#3b82f6;
     }
 
-    button:hover {
-      background: #1d4ed8;
+    .orb2{
+      bottom:-120px;
+      right:-80px;
+      background:#7c3aed;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+    .container{
+      position:relative;
+      z-index:1;
+      max-width:1450px;
+      margin:0 auto;
     }
 
-    .result {
-      margin-top: 12px;
-      color: #9fc0ff;
-      white-space: pre-wrap;
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:20px;
+      margin-bottom:24px;
+      padding:24px 28px;
+      border:1px solid var(--stroke);
+      background:linear-gradient(180deg, rgba(15,23,42,.88), rgba(9,14,27,.72));
+      backdrop-filter:blur(18px);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
     }
 
-    .list-box {
-      margin-top: 12px;
-      background: #09152d;
-      padding: 15px;
-      border-radius: 12px;
-      max-height: 400px;
-      overflow: auto;
-      white-space: pre-wrap;
+    .topbar::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(120deg, rgba(59,130,246,.08), transparent 40%, rgba(147,51,234,.08));
+      pointer-events:none;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      width:max-content;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(59,130,246,.12);
+      border:1px solid rgba(59,130,246,.25);
+      color:#bfdbfe;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .title{
+      margin:0;
+      font-size:34px;
+      line-height:1.05;
+      font-weight:800;
+      letter-spacing:-.03em;
+    }
+
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .admin-box{
+      min-width:320px;
+      max-width:420px;
+      width:100%;
+      position:relative;
+      z-index:2;
+    }
+
+    .admin-label{
+      display:block;
+      font-size:12px;
+      color:#cbd5e1;
+      margin-bottom:10px;
+      font-weight:600;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+
+    .admin-input-wrap{
+      position:relative;
+    }
+
+    .admin-input{
+      width:100%;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(2,6,23,.85);
+      color:white;
+      padding:15px 48px 15px 16px;
+      border-radius:16px;
+      outline:none;
+      font-size:14px;
+      transition:.2s ease;
+      box-shadow:inset 0 0 0 1px transparent;
+    }
+
+    .admin-input:focus{
+      border-color:rgba(59,130,246,.5);
+      box-shadow:0 0 0 4px rgba(59,130,246,.14);
+    }
+
+    .toggle-pass{
+      position:absolute;
+      top:50%;
+      right:12px;
+      transform:translateY(-50%);
+      background:none;
+      border:none;
+      color:#93c5fd;
+      cursor:pointer;
+      font-size:13px;
+      font-weight:700;
+      padding:4px;
+      width:auto;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+      margin-bottom:22px;
+    }
+
+    .stat{
+      background:linear-gradient(180deg, rgba(17,24,39,.9), rgba(8,13,24,.8));
+      border:1px solid var(--stroke);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .stat::before{
+      content:"";
+      position:absolute;
+      inset:auto auto 0 0;
+      width:100%;
+      height:2px;
+      background:linear-gradient(90deg, rgba(59,130,246,.9), rgba(147,51,234,.5), transparent);
+    }
+
+    .stat h4{
+      margin:0 0 10px;
+      font-size:13px;
+      color:#cbd5e1;
+      font-weight:600;
+      letter-spacing:.03em;
+    }
+
+    .stat .value{
+      font-size:28px;
+      font-weight:800;
+      letter-spacing:-.03em;
+      margin-bottom:6px;
+    }
+
+    .stat .mini{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+    }
+
+    .card{
+      position:relative;
+      background:linear-gradient(180deg, rgba(15,23,42,.88), rgba(9,14,27,.78));
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      padding:22px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(16px);
+      overflow:hidden;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      height:1px;
+      background:linear-gradient(90deg, rgba(59,130,246,.65), rgba(255,255,255,.05), rgba(147,51,234,.55));
+      opacity:.8;
+    }
+
+    .card h3{
+      margin:0 0 6px;
+      font-size:21px;
+      letter-spacing:-.02em;
+    }
+
+    .card p{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .input-group{
+      margin-bottom:12px;
+    }
+
+    .input-label{
+      display:block;
+      margin-bottom:7px;
+      font-size:12px;
+      font-weight:600;
+      color:#cbd5e1;
+    }
+
+    input, select, button, textarea{
+      font-family:inherit;
+    }
+
+    .field, .select{
+      width:100%;
+      padding:14px 14px;
+      border-radius:15px;
+      border:1px solid rgba(255,255,255,.07);
+      outline:none;
+      background:linear-gradient(180deg, rgba(2,6,23,.9), rgba(9,15,30,.82));
+      color:white;
+      font-size:14px;
+      transition:.2s ease;
+    }
+
+    .field::placeholder{
+      color:#64748b;
+    }
+
+    .field:focus, .select:focus{
+      border-color:rgba(59,130,246,.55);
+      box-shadow:0 0 0 4px rgba(59,130,246,.12);
+    }
+
+    .row-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .btn{
+      width:100%;
+      padding:14px 16px;
+      border:none;
+      border-radius:15px;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:700;
+      color:white;
+      margin-top:10px;
+      transition:transform .12s ease, opacity .2s ease, box-shadow .2s ease;
+      box-shadow:0 12px 30px rgba(37,99,235,.22);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+    }
+
+    .btn:active{
+      transform:translateY(0);
+    }
+
+    .btn.primary{
+      background:linear-gradient(135deg, var(--primary), var(--primary-2));
+    }
+
+    .btn.danger{
+      background:linear-gradient(135deg, #ef4444, #b91c1c);
+      box-shadow:0 12px 30px rgba(239,68,68,.22);
+    }
+
+    .btn.success{
+      background:linear-gradient(135deg, #22c55e, #15803d);
+      box-shadow:0 12px 30px rgba(34,197,94,.22);
+    }
+
+    .btn.warning{
+      background:linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow:0 12px 30px rgba(245,158,11,.22);
+    }
+
+    .btn.secondary{
+      background:linear-gradient(135deg, #334155, #1e293b);
+      box-shadow:0 12px 30px rgba(51,65,85,.22);
+    }
+
+    .result{
+      margin-top:14px;
+      padding:14px;
+      border-radius:16px;
+      background:rgba(2,6,23,.82);
+      border:1px solid rgba(255,255,255,.06);
+      color:#dbeafe;
+      white-space:pre-wrap;
+      word-break:break-word;
+      min-height:56px;
+      font-size:13px;
+      line-height:1.6;
+    }
+
+    .result.empty{
+      color:#64748b;
+    }
+
+    .result.ok{
+      border-color:rgba(34,197,94,.25);
+      color:#bbf7d0;
+      background:rgba(20,83,45,.12);
+    }
+
+    .result.err{
+      border-color:rgba(239,68,68,.22);
+      color:#fecaca;
+      background:rgba(127,29,29,.12);
+    }
+
+    .wide{
+      margin-top:20px;
+    }
+
+    .toolbar{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .toolbar .btn{
+      width:auto;
+      margin:0;
+      padding:12px 16px;
+      min-width:140px;
+    }
+
+    .list-box{
+      background:linear-gradient(180deg, rgba(2,6,23,.9), rgba(8,15,28,.88));
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:18px;
+      padding:16px;
+      max-height:450px;
+      overflow:auto;
+      white-space:pre-wrap;
+      color:#dbeafe;
+      font-size:13px;
+      line-height:1.65;
+    }
+
+    .footer-note{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .toast-wrap{
+      position:fixed;
+      top:22px;
+      right:22px;
+      z-index:9999;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .toast{
+      min-width:280px;
+      max-width:360px;
+      padding:14px 16px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(15,23,42,.96);
+      color:white;
+      box-shadow:var(--shadow);
+      animation:slideIn .22s ease;
+      font-size:14px;
+    }
+
+    .toast.success{
+      border-color:rgba(34,197,94,.3);
+    }
+
+    .toast.error{
+      border-color:rgba(239,68,68,.3);
+    }
+
+    .toast.info{
+      border-color:rgba(59,130,246,.3);
+    }
+
+    @keyframes slideIn{
+      from{ opacity:0; transform:translateY(-10px) scale(.98);}
+      to{ opacity:1; transform:translateY(0) scale(1);}
+    }
+
+    @media (max-width: 1100px){
+      .stats{
+        grid-template-columns:repeat(2,1fr);
+      }
+      .grid{
+        grid-template-columns:1fr;
+      }
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .admin-box{
+        max-width:none;
+      }
+    }
+
+    @media (max-width: 640px){
+      body{
+        padding:16px;
+      }
+      .stats{
+        grid-template-columns:1fr;
+      }
+      .row-2{
+        grid-template-columns:1fr;
+      }
+      .title{
+        font-size:26px;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Nexus Admin Panel</h1>
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
 
-  <div class="grid">
-    <div class="card">
-      <h3>Key Oluştur</h3>
-      <input id="adminPassword" placeholder="Admin şifresi">
-      <input id="createKey" placeholder="Key">
-      <input id="createUsername" placeholder="Kullanıcı adı">
-      <select id="createPlan">
-        <option value="standard">standard</option>
-        <option value="premium">premium</option>
-      </select>
-      <input id="createDays" type="number" placeholder="Kaç gün">
-      <button onclick="createKey()">Oluştur</button>
-      <div class="result" id="createResult"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div class="container">
+    <div class="topbar">
+      <div class="brand">
+        <div class="badge">◆ Premium Control Center</div>
+        <h1 class="title">Nexus Premium Admin Panel</h1>
+        <p class="subtitle">Key yönetimi, HWID işlemleri ve lisans kontrolü için modern yönetim arayüzü</p>
+      </div>
+
+      <div class="admin-box">
+        <label class="admin-label">Admin Şifresi</label>
+        <div class="admin-input-wrap">
+          <input id="adminPassword" class="admin-input" type="password" placeholder="Admin şifresini gir..." />
+          <button class="toggle-pass" onclick="togglePassword()">Göster</button>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Key Sil</h3>
-      <input id="deleteKeyValue" placeholder="Silinecek key">
-      <button onclick="deleteKey()">Sil</button>
-      <div class="result" id="deleteResult"></div>
+    <div class="stats">
+      <div class="stat">
+        <h4>Panel Durumu</h4>
+        <div class="value">Aktif</div>
+        <div class="mini">Sistem çevrimiçi</div>
+      </div>
+      <div class="stat">
+        <h4>Yetki Kontrolü</h4>
+        <div class="value">Güvenli</div>
+        <div class="mini">Şifre doğrulama gerekli</div>
+      </div>
+      <div class="stat">
+        <h4>Arayüz</h4>
+        <div class="value">Premium</div>
+        <div class="mini">Modern yönetim teması</div>
+      </div>
+      <div class="stat">
+        <h4>İşlem Modu</h4>
+        <div class="value">Live</div>
+        <div class="mini">API bağlantılı aksiyonlar</div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Key Süresi Uzat</h3>
-      <input id="extendKeyValue" placeholder="Key">
-      <input id="extendDays" type="number" placeholder="Eklenecek gün">
-      <button onclick="extendKey()">Süre Uzat</button>
-      <div class="result" id="extendResult"></div>
+    <div class="grid">
+      <div class="card">
+        <h3>Key Oluştur</h3>
+        <p>Yeni kullanıcı için lisans anahtarı üret ve paket tanımla.</p>
+
+        <div class="input-group">
+          <label class="input-label">Key</label>
+          <input id="createKey" class="field" placeholder="Örn: NEXUS-PRM-2026-001" />
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Kullanıcı Adı</label>
+          <input id="createUsername" class="field" placeholder="Kullanıcı adı gir..." />
+        </div>
+
+        <div class="row-2">
+          <div class="input-group">
+            <label class="input-label">Plan</label>
+            <select id="createPlan" class="select">
+              <option value="standard">standard</option>
+              <option value="premium">premium</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Süre (Gün)</label>
+            <input id="createDays" class="field" type="number" placeholder="30" />
+          </div>
+        </div>
+
+        <button class="btn primary" onclick="createKey()">Key Oluştur</button>
+        <div class="result empty" id="createResult">Henüz işlem yapılmadı.</div>
+      </div>
+
+      <div class="card">
+        <h3>Key Sil</h3>
+        <p>Mevcut lisansı sistemden tamamen kaldır.</p>
+
+        <div class="input-group">
+          <label class="input-label">Silinecek Key</label>
+          <input id="deleteKeyValue" class="field" placeholder="Silinecek key gir..." />
+        </div>
+
+        <button class="btn danger" onclick="deleteKey()">Key Sil</button>
+        <div class="result empty" id="deleteResult">Henüz işlem yapılmadı.</div>
+      </div>
+
+      <div class="card">
+        <h3>Key Süresi Uzat</h3>
+        <p>Var olan lisansın aktif gün sayısını artır.</p>
+
+        <div class="input-group">
+          <label class="input-label">Key</label>
+          <input id="extendKeyValue" class="field" placeholder="Uzatılacak key..." />
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Eklenecek Gün</label>
+          <input id="extendDays" class="field" type="number" placeholder="7" />
+        </div>
+
+        <button class="btn success" onclick="extendKey()">Süre Uzat</button>
+        <div class="result empty" id="extendResult">Henüz işlem yapılmadı.</div>
+      </div>
+
+      <div class="card">
+        <h3>HWID Sıfırla</h3>
+        <p>Cihaz eşleşmesini temizleyip kullanıcıya yeniden giriş hakkı ver.</p>
+
+        <div class="input-group">
+          <label class="input-label">Key</label>
+          <input id="resetKeyValue" class="field" placeholder="HWID sıfırlanacak key..." />
+        </div>
+
+        <button class="btn warning" onclick="resetHWID()">HWID Sıfırla</button>
+        <div class="result empty" id="resetResult">Henüz işlem yapılmadı.</div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>HWID Sıfırla</h3>
-      <input id="resetKeyValue" placeholder="Key">
-      <button onclick="resetHWID()">HWID Sıfırla</button>
-      <div class="result" id="resetResult"></div>
-    </div>
-  </div>
+    <div class="card wide">
+      <h3>Keyleri Listele</h3>
+      <p>Tüm kayıtlı lisansları görüntüle ve hızlıca kontrol et.</p>
 
-  <div class="card">
-    <h3>Keyleri Listele</h3>
-    <button onclick="listKeys()">Listele</button>
-    <div class="list-box" id="listResult"></div>
+      <div class="toolbar">
+        <button class="btn primary" onclick="listKeys()">Listele</button>
+        <button class="btn secondary" onclick="clearList()">Temizle</button>
+        <button class="btn secondary" onclick="copyList()">Kopyala</button>
+      </div>
+
+      <div class="list-box" id="listResult">Henüz veri getirilmedi.</div>
+      <div class="footer-note">Not: Listeleme işlemi için admin şifresi zorunludur.</div>
+    </div>
   </div>
 
   <script>
@@ -125,62 +649,163 @@
       return document.getElementById("adminPassword").value.trim();
     }
 
+    function togglePassword() {
+      const input = document.getElementById("adminPassword");
+      const btn = document.querySelector(".toggle-pass");
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "Gizle";
+      } else {
+        input.type = "password";
+        btn.textContent = "Göster";
+      }
+    }
+
+    function showToast(message, type = "info") {
+      const wrap = document.getElementById("toastWrap");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      wrap.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-8px)";
+        toast.style.transition = ".2s ease";
+        setTimeout(() => toast.remove(), 220);
+      }, 2600);
+    }
+
+    function setResult(id, data) {
+      const el = document.getElementById(id);
+      const isSuccess = data && data.success === true;
+
+      el.className = "result " + (isSuccess ? "ok" : "err");
+      el.textContent = JSON.stringify(data, null, 2);
+
+      if (isSuccess) {
+        showToast("İşlem başarılı.", "success");
+      } else {
+        showToast((data && data.message) ? data.message : "İşlem başarısız.", "error");
+      }
+    }
+
+    function requirePassword() {
+      const password = getAdminPassword();
+      if (!password) {
+        showToast("Önce admin şifresi girmen gerekiyor.", "error");
+        return false;
+      }
+      return true;
+    }
+
+    async function safeRequest(url, options = {}) {
+      try {
+        const res = await fetch(url, options);
+        return await res.json();
+      } catch (err) {
+        return {
+          success: false,
+          message: "Sunucuya bağlanırken hata oluştu.",
+          error: String(err)
+        };
+      }
+    }
+
     async function createKey() {
-      const res = await fetch("/api/admin/create-key", {
+      if (!requirePassword()) return;
+
+      const data = await safeRequest("/api/admin/create-key", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           adminPassword: getAdminPassword(),
-          key: document.getElementById("createKey").value,
-          username: document.getElementById("createUsername").value,
+          key: document.getElementById("createKey").value.trim(),
+          username: document.getElementById("createUsername").value.trim(),
           plan: document.getElementById("createPlan").value,
-          days: document.getElementById("createDays").value
+          days: document.getElementById("createDays").value.trim()
         })
       });
-      document.getElementById("createResult").textContent = JSON.stringify(await res.json(), null, 2);
+
+      setResult("createResult", data);
     }
 
     async function deleteKey() {
-      const res = await fetch("/api/admin/delete-key", {
+      if (!requirePassword()) return;
+
+      const data = await safeRequest("/api/admin/delete-key", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           adminPassword: getAdminPassword(),
-          key: document.getElementById("deleteKeyValue").value
+          key: document.getElementById("deleteKeyValue").value.trim()
         })
       });
-      document.getElementById("deleteResult").textContent = JSON.stringify(await res.json(), null, 2);
+
+      setResult("deleteResult", data);
     }
 
     async function extendKey() {
-      const res = await fetch("/api/admin/extend-key", {
+      if (!requirePassword()) return;
+
+      const data = await safeRequest("/api/admin/extend-key", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           adminPassword: getAdminPassword(),
-          key: document.getElementById("extendKeyValue").value,
-          days: document.getElementById("extendDays").value
+          key: document.getElementById("extendKeyValue").value.trim(),
+          days: document.getElementById("extendDays").value.trim()
         })
       });
-      document.getElementById("extendResult").textContent = JSON.stringify(await res.json(), null, 2);
+
+      setResult("extendResult", data);
     }
 
     async function resetHWID() {
-      const res = await fetch("/api/admin/reset-hwid", {
+      if (!requirePassword()) return;
+
+      const data = await safeRequest("/api/admin/reset-hwid", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           adminPassword: getAdminPassword(),
-          key: document.getElementById("resetKeyValue").value
+          key: document.getElementById("resetKeyValue").value.trim()
         })
       });
-      document.getElementById("resetResult").textContent = JSON.stringify(await res.json(), null, 2);
+
+      setResult("resetResult", data);
     }
 
     async function listKeys() {
+      if (!requirePassword()) return;
+
       const password = getAdminPassword();
-      const res = await fetch(`/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
-      document.getElementById("listResult").textContent = JSON.stringify(await res.json(), null, 2);
+      const box = document.getElementById("listResult");
+      box.textContent = "Yükleniyor...";
+
+      const data = await safeRequest(`/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
+      box.textContent = JSON.stringify(data, null, 2);
+
+      if (data && data.success === true) {
+        showToast("Key listesi getirildi.", "success");
+      } else {
+        showToast((data && data.message) ? data.message : "Liste alınamadı.", "error");
+      }
+    }
+
+    function clearList() {
+      document.getElementById("listResult").textContent = "Henüz veri getirilmedi.";
+      showToast("Liste alanı temizlendi.", "info");
+    }
+
+    async function copyList() {
+      const text = document.getElementById("listResult").textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Liste panoya kopyalandı.", "success");
+      } catch {
+        showToast("Kopyalama başarısız.", "error");
+      }
     }
   </script>
 </body>
