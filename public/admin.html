@@ -66,7 +66,7 @@
       bottom:-120px;
       right:-80px;
       background:#7c3aed;
-      animation-delay: -3s;
+      animation-delay:-3s;
     }
 
     @keyframes floatOrb{
@@ -181,6 +181,13 @@
       color:var(--muted);
       font-size:14px;
       line-height:1.7;
+    }
+
+    .login-note{
+      margin-top:14px;
+      font-size:12px;
+      color:#7dd3fc;
+      opacity:.9;
     }
 
     .topbar{
@@ -477,6 +484,13 @@
       transform:translateY(0);
     }
 
+    .btn:disabled{
+      opacity:.75;
+      cursor:not-allowed;
+      transform:none !important;
+      filter:none !important;
+    }
+
     .btn.primary{
       background:linear-gradient(135deg, var(--primary), var(--primary-2));
     }
@@ -674,12 +688,12 @@
       <div class="input-group">
         <label class="input-label">Admin Şifresi</label>
         <div style="position:relative;">
-          <input id="loginPassword" class="field" type="password" placeholder="Admin şifresini gir..." />
-          <button type="button" class="toggle-pass" onclick="toggleLoginPassword()">Göster</button>
+          <input id="loginPassword" class="field" type="password" placeholder="Admin şifresini gir..." autocomplete="current-password" />
         </div>
       </div>
 
-      <button class="btn primary" onclick="loginToPanel()">Panele Giriş Yap</button>
+      <button class="btn primary" id="loginBtn" onclick="loginToPanel()">Panele Giriş Yap</button>
+      <div class="login-note">Enter tuşu ile hızlı giriş yapabilirsin.</div>
     </div>
   </div>
 
@@ -698,24 +712,24 @@
 
     <div class="stats">
       <div class="stat">
-        <h4>Panel Durumu</h4>
-        <div class="value">Aktif</div>
-        <div class="mini">Sistem çevrimiçi</div>
+        <h4>Toplam Key</h4>
+        <div class="value" id="statTotal">--</div>
+        <div class="mini">Sistemde kayıtlı lisans</div>
       </div>
       <div class="stat">
-        <h4>Yetki Kontrolü</h4>
-        <div class="value">Güvenli</div>
-        <div class="mini">Şifre doğrulama gerekli</div>
+        <h4>Aktif Key</h4>
+        <div class="value" id="statActive">--</div>
+        <div class="mini">Kullanıma açık lisans</div>
       </div>
       <div class="stat">
-        <h4>Arayüz</h4>
-        <div class="value">Modern</div>
-        <div class="mini">Yönetim paneli teması</div>
+        <h4>Premium Key</h4>
+        <div class="value" id="statPremium">--</div>
+        <div class="mini">Premium plan kullananlar</div>
       </div>
       <div class="stat">
-        <h4>İşlem Modu</h4>
-        <div class="value">Live</div>
-        <div class="mini">API bağlantılı aksiyonlar</div>
+        <h4>Süresi Biten</h4>
+        <div class="value" id="statExpired">--</div>
+        <div class="mini">Pasif veya süresi dolan</div>
       </div>
     </div>
 
@@ -832,18 +846,6 @@
       }, 2600);
     }
 
-    function toggleLoginPassword() {
-      const input = document.getElementById("loginPassword");
-      const btn = document.querySelector("#loginScreen .toggle-pass");
-      if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "Gizle";
-      } else {
-        input.type = "password";
-        btn.textContent = "Göster";
-      }
-    }
-
     function getAdminPassword() {
       return ADMIN_PASSWORD.trim();
     }
@@ -858,18 +860,86 @@
       document.getElementById("loginScreen").classList.remove("hidden");
     }
 
+    function setLoginLoading(isLoading) {
+      const btn = document.getElementById("loginBtn");
+      if (!btn) return;
+      btn.disabled = isLoading;
+      btn.textContent = isLoading ? "Giriş yapılıyor..." : "Panele Giriş Yap";
+    }
+
+    function animateLoginError() {
+      const loginCard = document.getElementById("loginCard");
+      loginCard.classList.remove("shake");
+      void loginCard.offsetWidth;
+      loginCard.classList.add("shake");
+    }
+
+    function updateStatsFromListResponse(data) {
+      const totalEl = document.getElementById("statTotal");
+      const activeEl = document.getElementById("statActive");
+      const premiumEl = document.getElementById("statPremium");
+      const expiredEl = document.getElementById("statExpired");
+
+      if (!totalEl || !activeEl || !premiumEl || !expiredEl) return;
+
+      let items = [];
+
+      if (Array.isArray(data)) {
+        items = data;
+      } else if (Array.isArray(data?.data)) {
+        items = data.data;
+      } else if (Array.isArray(data?.keys)) {
+        items = data.keys;
+      } else if (Array.isArray(data?.data?.keys)) {
+        items = data.data.keys;
+      } else {
+        return;
+      }
+
+      const now = new Date();
+
+      const total = items.length;
+      const active = items.filter(item => {
+        const statusOk = (item?.status || "").toLowerCase() === "active";
+        const exp = item?.expiresAt ? new Date(item.expiresAt) : null;
+        const notExpired = exp instanceof Date && !isNaN(exp) ? exp > now : true;
+        return statusOk && notExpired;
+      }).length;
+
+      const premium = items.filter(item => (item?.plan || "").toLowerCase() === "premium").length;
+
+      const expired = items.filter(item => {
+        const status = (item?.status || "").toLowerCase();
+        const exp = item?.expiresAt ? new Date(item.expiresAt) : null;
+        const isExpiredByDate = exp instanceof Date && !isNaN(exp) ? exp <= now : false;
+        return status !== "active" || isExpiredByDate;
+      }).length;
+
+      totalEl.textContent = total;
+      activeEl.textContent = active;
+      premiumEl.textContent = premium;
+      expiredEl.textContent = expired;
+    }
+
+    async function refreshStats() {
+      if (!getAdminPassword()) return;
+      const data = await safeRequest(`/api/admin/list-keys?adminPassword=${encodeURIComponent(getAdminPassword())}`);
+      if (data && data.success === true) {
+        updateStatsFromListResponse(data);
+      }
+    }
+
     async function loginToPanel() {
       const passwordInput = document.getElementById("loginPassword");
-      const loginCard = document.getElementById("loginCard");
       const password = passwordInput.value.trim();
 
       if (!password) {
-        loginCard.classList.remove("shake");
-        void loginCard.offsetWidth;
-        loginCard.classList.add("shake");
+        animateLoginError();
         showToast("Admin şifresi gerekli.", "error");
         return;
       }
+
+      setLoginLoading(true);
 
       try {
         const res = await fetch(`/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
@@ -878,19 +948,22 @@
         if (data && data.success === true) {
           ADMIN_PASSWORD = password;
           sessionStorage.setItem(SESSION_KEY, password);
+
+          passwordInput.value = "";
+          document.activeElement.blur();
+
           showPanel();
+          updateStatsFromListResponse(data);
           showToast("Panele giriş başarılı.", "success");
         } else {
-          loginCard.classList.remove("shake");
-          void loginCard.offsetWidth;
-          loginCard.classList.add("shake");
+          animateLoginError();
           showToast((data && data.message) ? data.message : "Şifre doğrulanamadı.", "error");
         }
       } catch (err) {
-        loginCard.classList.remove("shake");
-        void loginCard.offsetWidth;
-        loginCard.classList.add("shake");
+        animateLoginError();
         showToast("Sunucuya bağlanırken hata oluştu.", "error");
+      } finally {
+        setLoginLoading(false);
       }
     }
 
@@ -955,6 +1028,14 @@
       });
 
       setResult("createResult", data);
+
+      if (data && data.success === true) {
+        document.getElementById("createKey").value = "";
+        document.getElementById("createUsername").value = "";
+        document.getElementById("createDays").value = "";
+        document.activeElement.blur();
+        await refreshStats();
+      }
     }
 
     async function deleteKey() {
@@ -970,6 +1051,12 @@
       });
 
       setResult("deleteResult", data);
+
+      if (data && data.success === true) {
+        document.getElementById("deleteKeyValue").value = "";
+        document.activeElement.blur();
+        await refreshStats();
+      }
     }
 
     async function extendKey() {
@@ -986,6 +1073,13 @@
       });
 
       setResult("extendResult", data);
+
+      if (data && data.success === true) {
+        document.getElementById("extendKeyValue").value = "";
+        document.getElementById("extendDays").value = "";
+        document.activeElement.blur();
+        await refreshStats();
+      }
     }
 
     async function resetHWID() {
@@ -1001,6 +1095,12 @@
       });
 
       setResult("resetResult", data);
+
+      if (data && data.success === true) {
+        document.getElementById("resetKeyValue").value = "";
+        document.activeElement.blur();
+        await refreshStats();
+      }
     }
 
     async function listKeys() {
@@ -1014,6 +1114,7 @@
       box.textContent = JSON.stringify(data, null, 2);
 
       if (data && data.success === true) {
+        updateStatsFromListResponse(data);
         showToast("Key listesi getirildi.", "success");
       } else {
         showToast((data && data.message) ? data.message : "Liste alınamadı.", "error");
@@ -1037,15 +1138,17 @@
 
     document.getElementById("loginPassword").addEventListener("keydown", function(e){
       if (e.key === "Enter") {
+        document.activeElement.blur();
         loginToPanel();
       }
     });
 
-    window.addEventListener("load", () => {
+    window.addEventListener("load", async () => {
       const savedPassword = sessionStorage.getItem(SESSION_KEY);
       if (savedPassword) {
         ADMIN_PASSWORD = savedPassword;
         showPanel();
+        await refreshStats();
       } else {
         showLogin();
       }
