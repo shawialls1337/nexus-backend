@@ -1,7 +1,5 @@
 require("dotenv").config();
 
-console.log("### BAN ROUTELU SERVER CALISTI ###");
-
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -15,12 +13,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-// 🔥 TÜM REQUESTLERİ LOGLA (DEBUG)
-app.use((req, res, next) => {
-  console.log(`[REQ] ${req.method} ${req.url}`);
-  next();
-});
-
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 10000
 })
@@ -30,17 +22,6 @@ mongoose.connect(process.env.MONGO_URI, {
 function isAdmin(req) {
   return req.body && req.body.adminPassword === process.env.ADMIN_PASSWORD;
 }
-
-// 🔥 DEBUG ROUTE (DEPLOY TEST)
-app.get("/api/admin/debug-routes", (req, res) => {
-  res.json({
-    success: true,
-    routes: [
-      "POST /api/admin/hwid-ban",
-      "POST /api/admin/hwid-unban"
-    ]
-  });
-});
 
 app.get("/", (req, res) => {
   res.send("Backend çalışıyor");
@@ -65,7 +46,6 @@ app.get("/api/admin/list-keys", async (req, res) => {
       data: keys
     });
   } catch (err) {
-    console.log("LIST-KEYS HATA:", err);
     return res.status(500).json({ success: false, message: "Sunucu hatası" });
   }
 });
@@ -110,7 +90,6 @@ app.post("/api/admin/create-key", async (req, res) => {
       data: newLicense
     });
   } catch (err) {
-    console.log("CREATE-KEY HATA:", err);
     return res.status(500).json({ success: false, message: "Sunucu hatası" });
   }
 });
@@ -138,7 +117,6 @@ app.post("/api/admin/delete-key", async (req, res) => {
       message: "Key silindi."
     });
   } catch (err) {
-    console.log("DELETE-KEY HATA:", err);
     return res.status(500).json({ success: false, message: "Sunucu hatası" });
   }
 });
@@ -186,16 +164,13 @@ app.post("/api/admin/extend-key", async (req, res) => {
       expiresAt: found.expiresAt
     });
   } catch (err) {
-    console.log("EXTEND-KEY HATA:", err);
     return res.status(500).json({ success: false, message: "Sunucu hatası" });
   }
 });
 
-// 🔴 HWID BAN (FIXED + DEBUG)
+// 🔴 HWID BAN
 app.post("/api/admin/hwid-ban", async (req, res) => {
   try {
-    console.log("🔥 HWID BAN ÇALIŞTI:", req.body);
-
     if (!isAdmin(req)) {
       return res.status(403).json({ success: false, message: "Yetkisiz." });
     }
@@ -222,16 +197,13 @@ app.post("/api/admin/hwid-ban", async (req, res) => {
     });
 
   } catch (err) {
-    console.log("HWID-BAN HATA:", err);
     return res.status(500).json({ success: false, message: "Sunucu hatası" });
   }
 });
 
-// 🟢 HWID UNBAN (FIXED + DEBUG)
+// 🟢 HWID UNBAN
 app.post("/api/admin/hwid-unban", async (req, res) => {
   try {
-    console.log("🔥 HWID UNBAN ÇALIŞTI:", req.body);
-
     if (!isAdmin(req)) {
       return res.status(403).json({ success: false, message: "Yetkisiz." });
     }
@@ -263,7 +235,6 @@ app.post("/api/admin/hwid-unban", async (req, res) => {
     });
 
   } catch (err) {
-    console.log("HWID-UNBAN HATA:", err);
     return res.status(500).json({ success: false, message: "Sunucu hatası" });
   }
 });
@@ -306,12 +277,10 @@ app.post("/api/login", async (req, res) => {
 
     return res.json({ success: true, message: "Giriş başarılı.", data: found });
   } catch (err) {
-    console.log("LOGIN HATA:", err);
     return res.status(500).json({ success: false, message: "Sunucu hatası" });
   }
 });
 
-// ❗ 404 HANDLER (JSON GARANTİ)
 app.use("/api", (req, res) => {
   return res.status(404).json({ success: false, message: "API endpoint bulunamadı." });
 });
