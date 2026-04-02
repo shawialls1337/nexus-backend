@@ -889,9 +889,7 @@
   </div>
 
   <script>
-    const API_BASE = window.location.protocol === "file:"
-      ? "https://nexus-backend-7o5m.onrender.com"
-      : window.location.origin;
+    const API_BASE = "https://nexus-backend-7o5m.onrender.com";
 
     const SESSION_KEY = "nexus_admin_session";
     const TOKEN_KEY = "nexus_admin_token";
@@ -1116,7 +1114,17 @@
         const opts = { ...options };
         opts.headers = getAuthHeaders(options.headers || {});
         const res = await fetch(url, opts);
-        return await res.json();
+        const text = await res.text();
+
+        try {
+          return JSON.parse(text);
+        } catch (parseErr) {
+          return {
+            success: false,
+            message: "Sunucuya bağlanırken hata oluştu.",
+            error: `JSON parse hatası | URL: ${url} | Status: ${res.status} | Gelen veri JSON değil`
+          };
+        }
       } catch (err) {
         return {
           success: false,
