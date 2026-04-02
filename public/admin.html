@@ -694,7 +694,7 @@
       <div class="login-badge">◆ Nexus Security Access</div>
       <h1 class="login-title">Nexus Admin Panel</h1>
       <p class="login-subtitle">
-        Hoşgeldin! Yönetim paneline erişmek için admin şifrenizi giriniz.
+        Hoşgeldiniz! Yönetim paneline erişmek için admin şifrenizi giriniz.
       </p>
 
       <div class="input-group">
@@ -710,12 +710,13 @@
   <div class="container hidden" id="panelContainer">
     <div class="topbar">
       <div class="brand">
-        <div class="badge">◆ Nexus Control Center</div>
+        <div class="badge">Developer by shawialls</div>
         <h1 class="title">Nexus Admin Panel</h1>
-        <p class="subtitle">Key yönetimi, arama, export, log ve dashboard kontrolleri</p>
+        <p class="subtitle">Nexus Key Yönetim Sistemi & Kontrol Paneli</p>
       </div>
 
       <div class="topbar-right">
+        <button class="logout-btn" onclick="debugRoutes()">Debug Routes</button>
         <button class="logout-btn" onclick="toggleTheme()">Tema Değiştir</button>
         <button class="logout-btn" onclick="logoutPanel()">Çıkış Yap</button>
       </div>
@@ -747,12 +748,12 @@
     <div class="grid">
       <div class="card">
         <h3>Key Oluştur</h3>
-        <p>Yeni kullanıcı için lisans anahtarı üret, paket tanımla ve otomatik üretici kullan.</p>
+        <p>Yeni kullanıcılar için otomatik/manuel lisans anahtarı oluşturma ve paket atama sistemi</p>
 
         <div class="row-3">
           <div class="input-group">
             <label class="input-label">Key</label>
-            <input id="createKey" class="field" placeholder="Örn: NEXUS-PRM-2026-001" />
+            <input id="createKey" class="field" placeholder="Örn: NEXUS-KEY-2026-001" />
           </div>
 
           <div class="input-group">
@@ -792,7 +793,7 @@
 
       <div class="card">
         <h3>Hızlı İşlemler</h3>
-        <p>Tek key üzerinden hızlı aksiyon al. Bu alan manuel müdahale için ideal.</p>
+        <p>Hızlı işlem paneli üzerinden hızlı ve pratik kullanım sağlayın.</p>
 
         <div class="input-group">
           <label class="input-label">Key</label>
@@ -819,7 +820,7 @@
 
     <div class="card wide">
       <h3>Key Yönetimi</h3>
-      <p>Arama, filtre, export ve tablo aksiyonlarıyla profesyonel yönetim ekranı.</p>
+      <p>Gelişmiş Yönetim Paneli (Arama • Filtre • Export • Tablo Aksiyonları)</p>
 
       <div class="search-area">
         <input id="searchInput" class="field" placeholder="Key veya kullanıcı adına göre ara..." />
@@ -889,7 +890,25 @@
   </div>
 
   <script>
-    const API_BASE = "https://nexus-backend-7o5m.onrender.com";
+    const FALLBACK_API_BASE = "https://nexus-backend-7o5m.onrender.com";
+
+    function resolveApiBase() {
+      if (window.location.protocol === "file:") return FALLBACK_API_BASE;
+
+      const host = window.location.hostname.toLowerCase();
+
+      if (
+        host.includes("onrender.com") ||
+        host === "localhost" ||
+        host === "127.0.0.1"
+      ) {
+        return window.location.origin;
+      }
+
+      return FALLBACK_API_BASE;
+    }
+
+    const API_BASE = resolveApiBase();
 
     const SESSION_KEY = "nexus_admin_session";
     const TOKEN_KEY = "nexus_admin_token";
@@ -1043,8 +1062,7 @@
       setLoginLoading(true);
 
       try {
-        const res = await fetch(`${API_BASE}/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
-        const data = await res.json();
+        const data = await safeRequest(`${API_BASE}/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
 
         if (data && data.success === true) {
           ADMIN_PASSWORD = password;
@@ -1113,24 +1131,57 @@
       try {
         const opts = { ...options };
         opts.headers = getAuthHeaders(options.headers || {});
-        const res = await fetch(url, opts);
-        const text = await res.text();
 
+        const res = await fetch(url, opts);
+        const rawText = await res.text();
+        const contentType = res.headers.get("content-type") || "";
+
+        if (!rawText) {
+          return {
+            success: res.ok,
+            message: res.ok ? "İşlem başarılı." : `Boş cevap döndü. Status: ${res.status}`
+          };
+        }
+
+        let parsed;
         try {
-          return JSON.parse(text);
+          parsed = JSON.parse(rawText);
         } catch (parseErr) {
           return {
             success: false,
-            message: "Sunucuya bağlanırken hata oluştu.",
-            error: `JSON parse hatası | URL: ${url} | Status: ${res.status} | Gelen veri JSON değil`
+            message: `Sunucu JSON yerine farklı bir cevap döndü. Status: ${res.status}`,
+            error: rawText,
+            contentType
           };
         }
+
+        if (!res.ok) {
+          return {
+            success: false,
+            ...parsed,
+            statusCode: res.status
+          };
+        }
+
+        return parsed;
       } catch (err) {
         return {
           success: false,
           message: "Sunucuya bağlanırken hata oluştu.",
           error: String(err)
         };
+      }
+    }
+
+    async function debugRoutes() {
+      const data = await safeRequest(`${API_BASE}/api/admin/debug-routes`);
+      console.log("DEBUG ROUTES:", data);
+
+      if (data?.success) {
+        showToast("Debug route bulundu. Backend güncel.", "success");
+        saveLog("Debug Routes", JSON.stringify(data.routes || []));
+      } else {
+        showToast(data?.message || "Debug route bulunamadı.", "error");
       }
     }
 
