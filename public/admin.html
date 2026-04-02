@@ -694,7 +694,7 @@
       <div class="login-badge">◆ Nexus Security Access</div>
       <h1 class="login-title">Nexus Admin Panel</h1>
       <p class="login-subtitle">
-        Hoşgeldin! Yönetim paneline erişmek için  admin şifrenizi giriniz.
+        Hoşgeldin! Yönetim paneline erişmek için admin şifrenizi giriniz.
       </p>
 
       <div class="input-group">
@@ -889,7 +889,10 @@
   </div>
 
   <script>
-    const API_BASE = "http://localhost:3000";
+    const API_BASE = window.location.protocol === "file:"
+      ? "https://nexus-backend-7o5m.onrender.com"
+      : window.location.origin;
+
     const SESSION_KEY = "nexus_admin_session";
     const TOKEN_KEY = "nexus_admin_token";
     const THEME_KEY = "nexus_admin_theme";
@@ -1205,7 +1208,7 @@
         return;
       }
 
-      tbody.innerHTML = items.map((item, index) => `
+      tbody.innerHTML = items.map((item) => `
         <tr>
           <td>
             <div class="key-cell">
