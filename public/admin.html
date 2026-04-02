@@ -878,6 +878,7 @@
   </div>
 
   <script>
+    const API_BASE = "http://localhost:3000";
     const SESSION_KEY = "nexus_admin_session";
     const TOKEN_KEY = "nexus_admin_token";
     const THEME_KEY = "nexus_admin_theme";
@@ -1030,7 +1031,7 @@
       setLoginLoading(true);
 
       try {
-        const res = await fetch(`/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
+        const res = await fetch(`${API_BASE}/api/admin/list-keys?adminPassword=${encodeURIComponent(password)}`);
         const data = await res.json();
 
         if (data && data.success === true) {
@@ -1244,7 +1245,7 @@
 
     async function refreshKeys() {
       if (!requirePassword()) return;
-      const data = await safeRequest(`/api/admin/list-keys?adminPassword=${encodeURIComponent(getAdminPassword())}`);
+      const data = await safeRequest(`${API_BASE}/api/admin/list-keys?adminPassword=${encodeURIComponent(getAdminPassword())}`);
       if (data && data.success === true) {
         normalizeKeysAndRender(data);
       }
@@ -1262,7 +1263,7 @@
         days: document.getElementById("createDays").value.trim()
       };
 
-      const data = await safeRequest("/api/admin/create-key", {
+      const data = await safeRequest(`${API_BASE}/api/admin/create-key`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -1281,7 +1282,7 @@
     }
 
     async function deleteKeyByValue(key, targetResultId = null) {
-      const data = await safeRequest("/api/admin/delete-key", {
+      const data = await safeRequest(`${API_BASE}/api/admin/delete-key`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1300,7 +1301,7 @@
     }
 
     async function extendKeyByValue(key, days, targetResultId = null) {
-      const data = await safeRequest("/api/admin/extend-key", {
+      const data = await safeRequest(`${API_BASE}/api/admin/extend-key`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1320,7 +1321,7 @@
     }
 
     async function banKeyByValue(key, targetResultId = null) {
-      const data = await safeRequest("/api/admin/hwid-ban", {
+      const data = await safeRequest(`${API_BASE}/api/admin/hwid-ban`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
