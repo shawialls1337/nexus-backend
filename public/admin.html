@@ -537,6 +537,12 @@
       border-color:rgba(239,68,68,.22);
     }
 
+    .status-banned{
+      background:rgba(239,68,68,.18);
+      color:#ef4444;
+      border-color:rgba(239,68,68,.35);
+    }
+
     .plan-premium{
       background:rgba(245,158,11,.12);
       color:#d97706;
@@ -799,8 +805,12 @@
         </div>
 
         <div class="row-2" style="margin-top:12px;">
-          <button class="btn secondary" style="margin-top:0;" onclick="quickCopyKey()">Kopyala</button>
+          <button class="btn primary" style="margin-top:0;" onclick="quickUnban()">HWID Unban</button>
           <button class="btn danger" style="margin-top:0;" onclick="quickDelete()">Sil</button>
+        </div>
+
+        <div class="row-2" style="margin-top:12px;">
+          <button class="btn secondary" style="margin-top:0;" onclick="quickCopyKey()">Kopyala</button>
         </div>
 
         <div class="result empty" id="quickResult">Hızlı işlem sonucu burada görünecek.</div>
@@ -822,6 +832,7 @@
           <option value="all">Tüm Durumlar</option>
           <option value="active">Aktif</option>
           <option value="expired">Expired</option>
+          <option value="banned">Banned</option>
         </select>
         <button class="btn secondary" style="margin-top:0;" onclick="applyFilters()">Filtrele</button>
         <button class="btn secondary" style="margin-top:0;" onclick="resetFilters()">Sıfırla</button>
@@ -1126,9 +1137,16 @@
       const now = new Date();
       const statusLower = (raw?.status || "").toLowerCase();
 
-      const computedStatus = statusLower
-        ? statusLower
-        : (expiresDate && !isNaN(expiresDate) && expiresDate <= now ? "expired" : "active");
+      let computedStatus = "active";
+      if (statusLower === "banned") {
+        computedStatus = "banned";
+      } else if (statusLower === "expired") {
+        computedStatus = "expired";
+      } else if (statusLower === "active") {
+        computedStatus = "active";
+      } else if (expiresDate && !isNaN(expiresDate) && expiresDate <= now) {
+        computedStatus = "expired";
+      }
 
       return {
         key: raw?.key || raw?.licenseKey || raw?.code || "-",
@@ -1136,7 +1154,7 @@
         plan: (raw?.plan || "standard").toLowerCase(),
         days: raw?.days ?? raw?.duration ?? raw?.remainingDays ?? "-",
         expiresAt,
-        status: computedStatus === "active" ? "active" : "expired",
+        status: computedStatus,
         raw
       };
     }
@@ -1152,7 +1170,7 @@
       const total = allKeys.length;
       const active = allKeys.filter(x => x.status === "active").length;
       const premium = allKeys.filter(x => x.plan === "premium").length;
-      const expired = allKeys.filter(x => x.status !== "active").length;
+      const expired = allKeys.filter(x => x.status === "expired").length;
 
       document.getElementById("statTotal").textContent = total;
       document.getElementById("statActive").textContent = active;
@@ -1165,6 +1183,12 @@
       const d = new Date(dateStr);
       if (isNaN(d)) return String(dateStr);
       return d.toLocaleString("tr-TR");
+    }
+
+    function getStatusClass(status) {
+      if (status === "banned") return "status-banned";
+      if (status === "expired") return "status-expired";
+      return "status-active";
     }
 
     function renderTable(items) {
@@ -1195,7 +1219,7 @@
             </span>
           </td>
           <td>
-            <span class="status-pill ${item.status === "active" ? "status-active" : "status-expired"}">
+            <span class="status-pill ${getStatusClass(item.status)}">
               ${escapeHtml(item.status)}
             </span>
           </td>
@@ -1206,6 +1230,7 @@
               <button class="icon-btn secondary" onclick="copyKeyValue('${encodeURIComponent(item.key)}')">Kopyala</button>
               <button class="icon-btn success" onclick="extendSpecificKey('${encodeURIComponent(item.key)}', 1)">+1 Gün</button>
               <button class="icon-btn warning" onclick="banSpecificKey('${encodeURIComponent(item.key)}')">HWID Ban</button>
+              <button class="icon-btn primary" onclick="unbanSpecificKey('${encodeURIComponent(item.key)}')">Unban</button>
               <button class="icon-btn danger" onclick="deleteSpecificKey('${encodeURIComponent(item.key)}')">Sil</button>
             </div>
           </td>
@@ -1339,6 +1364,25 @@
       return data;
     }
 
+    async function unbanKeyByValue(key, targetResultId = null) {
+      const data = await safeRequest(`${API_BASE}/api/admin/hwid-unban`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminPassword: getAdminPassword(),
+          key
+        })
+      });
+
+      if (targetResultId) setResult(targetResultId, data);
+
+      if (data && data.success === true) {
+        await refreshKeys();
+        saveLog("HWID Ban Kaldırıldı", key);
+      }
+      return data;
+    }
+
     async function quickDelete() {
       const key = document.getElementById("quickKeyValue").value.trim();
       if (!key) return showToast("Key gir.", "error");
@@ -1357,6 +1401,13 @@
       const key = document.getElementById("quickKeyValue").value.trim();
       if (!key) return showToast("Key gir.", "error");
       const data = await banKeyByValue(key, "quickResult");
+      if (data?.success) document.getElementById("quickKeyValue").value = "";
+    }
+
+    async function quickUnban() {
+      const key = document.getElementById("quickKeyValue").value.trim();
+      if (!key) return showToast("Key gir.", "error");
+      const data = await unbanKeyByValue(key, "quickResult");
       if (data?.success) document.getElementById("quickKeyValue").value = "";
     }
 
@@ -1380,6 +1431,11 @@
     async function banSpecificKey(encodedKey) {
       const key = decodeURIComponent(encodedKey);
       await banKeyByValue(key);
+    }
+
+    async function unbanSpecificKey(encodedKey) {
+      const key = decodeURIComponent(encodedKey);
+      await unbanKeyByValue(key);
     }
 
     async function copyKeyValue(encodedKey) {
